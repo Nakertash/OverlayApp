@@ -1,0 +1,29 @@
+﻿<Window x:Class="OverlayApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:OverlayApp"
+        mc:Ignorable="d"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Topmost="True"
+        Background="#00FFFFFF"
+        Title="MainWindow" Height="100" Width="100">
+    <Border CornerRadius="10" Background="#80000000" Padding="10">
+        <StackPanel>
+            <!-- Верхняя панель для перетаскивания -->
+            <Border Background="#404040" Height="30" MouseLeftButtonDown="DragArea_MouseLeftButtonDown"  MouseRightButtonUp="TitleBar_MouseRightButtonUp">
+                <TextBlock Text="Overlay" Foreground="White" 
+                           VerticalAlignment="Center" Margin="0,0,0,0" HorizontalAlignment="Center"/>
+            </Border>
+
+            <!-- Контент -->
+            <StackPanel >
+                <Label Content="0" Foreground="White" HorizontalAlignment="Center" />
+                <Button Content="Click me!"  Click="Button_Click"/>
+            </StackPanel>
+        </StackPanel>
+
+    </Border>
+</Window>
