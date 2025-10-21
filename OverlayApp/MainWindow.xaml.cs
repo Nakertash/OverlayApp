@@ -70,7 +70,6 @@ namespace OverlayApp
             if(_fs!=null)
             {
                 _fs.Close();
-                _fs.Dispose();
             }
             if(_watcher!=null)
             {
