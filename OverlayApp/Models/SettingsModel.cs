@@ -8,6 +8,6 @@ namespace OverlayApp.Models
 {
     public class SettingsModel
     {
-        public List<string> Pets { get; set; }
+        public List<string> Pets { get; set; } = new List<string>();
     }
 }

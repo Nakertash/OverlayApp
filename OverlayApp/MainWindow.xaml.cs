@@ -29,21 +29,25 @@ namespace OverlayApp
             InitializeComponent();
             Loaded += OnLoaded;
             ReloadFile();
-            _=RunLoop();
-            Closed += (sender, args)=>
+            _ = RunLoop();
+            Closed += (sender, args) =>
             {
                 _timer.Dispose();
-                if(_watcher!=null)
+                if (_watcher != null)
                     _watcher.Dispose();
 
-                if( _fs!=null)
+                if (_fs != null)
                     _fs.Dispose();
             };
-            if(!File.Exists("./app_settings.json"))
+            if (!File.Exists("./app_settings.json"))
             {
                 File.WriteAllText("./app_settings.json", JsonConvert.SerializeObject(new SettingsModel()));
             }
             var settings = JsonConvert.DeserializeObject<SettingsModel>(File.ReadAllText("./app_settings.json"));
+            if (settings.Pets == null)
+            {
+                settings.Pets = new List<string>();
+            }
             _pets = settings.Pets;
         }
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
@@ -54,7 +58,7 @@ namespace OverlayApp
             {
                 var result = settingsWindow.settingsModel;
                 _pets = result.Pets;
-                
+
             }
         }
         private void ReloadFile()
@@ -67,11 +71,11 @@ namespace OverlayApp
                 return;
             }
             var configPath = File.ReadAllText("./path.txt");
-            if(_fs!=null)
+            if (_fs != null)
             {
                 _fs.Close();
             }
-            if(_watcher!=null)
+            if (_watcher != null)
             {
                 _watcher.Dispose();
             }
@@ -99,11 +103,11 @@ namespace OverlayApp
                 var name = System.IO.Path.GetFileName(file);
                 var lastDate = DateTime.MinValue;
                 var lastId = 0;
-                if(name.Contains("_")&& name.Contains(".txt"))
+                if (name.Contains("_") && name.Contains(".txt"))
                 {
                     var parts = name.Split('_');
                     var id = int.Parse(parts[2].Replace(".txt", ""));
-                    var date = DateTime.Parse(parts[1].Substring(0,4) + "-" + parts[1].Substring(4, 2) + "-" + parts[1].Substring(6, 2));
+                    var date = DateTime.Parse(parts[1].Substring(0, 4) + "-" + parts[1].Substring(4, 2) + "-" + parts[1].Substring(6, 2));
                     if (id > lastId || date > lastDate)
                     {
                         lastDate = date;
@@ -137,9 +141,9 @@ namespace OverlayApp
                 var lines = text.Split('\n');
                 foreach (var line in lines)
                 {
-                    if (line.Contains("терпит урон") 
-                        || line.ToLower().Contains("you hit") 
-                        || _pets.Any(x => line.ToLower().Contains(x.ToLower()+" hits"))
+                    if (line.Contains("терпит урон")
+                        || line.ToLower().Contains("you hit")
+                        || _pets.Any(x => line.ToLower().Contains(x.ToLower() + " hits"))
                         )
                     {
                         var words = line.Split(' ');
@@ -159,7 +163,7 @@ namespace OverlayApp
                     }
                 }
                 _lastBytes = fileSize;
-                
+
             }
         }
         private async Task RunLoop()
@@ -171,13 +175,13 @@ namespace OverlayApp
                     var now = DateTime.Now.TimeOfDay;
                     if (_firstBlood == null) continue;
                     var delta = (int)(now - _firstBlood.Time).TotalSeconds;
-                    dpsLabel.Content = Math.Round((double)_damage.Sum(x=>x.Damage) / delta, 2);
+                    dpsLabel.Content = Math.Round((double)_damage.Sum(x => x.Damage) / delta, 2);
                 }
             }
             catch (OperationCanceledException)
             {
             }
-        } 
+        }
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             var hwnd = new WindowInteropHelper(this).Handle;
@@ -269,6 +273,6 @@ namespace OverlayApp
         [DllImport("user32.dll")]
         private static extern bool PostMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
 
-        
+
     }
 }
