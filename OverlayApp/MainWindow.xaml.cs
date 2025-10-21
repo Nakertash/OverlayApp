@@ -1,15 +1,8 @@
-﻿using System.Runtime.InteropServices;
-using System.Text;
+﻿using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace OverlayApp
 {
@@ -18,11 +11,139 @@ namespace OverlayApp
     /// </summary>
     public partial class MainWindow : Window
     {
+        private readonly TimeSpan _tick = TimeSpan.FromMilliseconds(100);
+        private readonly PeriodicTimer _timer;
+        private string _logFile = string.Empty;
+        private long _lastBytes = 0;
+        private FileSystemWatcher _watcher;
+        private FileStream _fs;
+        private List<DamageWithTimeStamp> _damage = new List<DamageWithTimeStamp>();
+        private DamageWithTimeStamp? _firstBlood;
         public MainWindow()
         {
+            _timer = new PeriodicTimer(_tick);
             InitializeComponent();
             Loaded += OnLoaded;
+            ReloadFile();
+            _=RunLoop();
+            Closed += (sender, args)=>
+            {
+                _timer.Dispose();
+                if(_watcher!=null)
+                    _watcher.Dispose();
+
+                if( _fs!=null)
+                    _fs.Dispose();
+            };
         }
+        private void ReloadFile()
+        {
+            var configPath = File.ReadAllText("./path.txt");
+            if(_fs!=null)
+            {
+                _fs.Close();
+                _fs.Dispose();
+            }
+            if(_watcher!=null)
+            {
+                _watcher.Dispose();
+            }
+            _logFile = FindLogFile(configPath);
+            if (string.IsNullOrEmpty(_logFile))
+            {
+                Close();
+            }
+            _watcher = new FileSystemWatcher(Path.GetDirectoryName(_logFile))
+            {
+                Filter = Path.GetFileName(_logFile),
+                NotifyFilter = NotifyFilters.Size | NotifyFilters.LastWrite
+            };
+            _fs = new FileStream(_logFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            _watcher.Changed += (_, __) => CheckLog();
+            _watcher.EnableRaisingEvents = true;
+            _lastBytes = new FileInfo(_logFile).Length;
+        }
+        private string FindLogFile(string folderPath)
+        {
+            var result = string.Empty;
+            var files = Directory.GetFiles(folderPath);
+            foreach (var file in files)
+            {
+                var name = System.IO.Path.GetFileName(file);
+                var lastDate = DateTime.MinValue;
+                var lastId = 0;
+                if(name.Contains("_")&& name.Contains(".txt"))
+                {
+                    var parts = name.Split('_');
+                    var id = int.Parse(parts[2].Replace(".txt", ""));
+                    var date = DateTime.Parse(parts[1].Substring(0,4) + "-" + parts[1].Substring(4, 2) + "-" + parts[1].Substring(6, 2));
+                    if (id > lastId || date > lastDate)
+                    {
+                        lastDate = date;
+                        lastId = id;
+                        result = file;
+                    }
+                }
+            }
+            return result;
+        }
+        private void CheckLog()
+        {
+            if (_fs == null) return;
+
+            long fileSize = _fs.Length;
+
+            if (fileSize < _lastBytes)
+            {
+                // файл был очищен или перезаписан
+                _fs.Seek(0, SeekOrigin.Begin);
+                _lastBytes = 0;
+                fileSize = _fs.Length;
+            }
+
+            if (fileSize > _lastBytes)
+            {
+                _fs.Seek(_lastBytes, SeekOrigin.Begin);
+                byte[] buffer = new byte[fileSize - _lastBytes];
+                int bytesRead = _fs.Read(buffer, 0, buffer.Length);
+                var text = System.Text.Encoding.Default.GetString(buffer, 0, bytesRead);
+                if(text.Contains("терпит урон"))
+                {
+                    var words = text.Split(' ');
+                    var numstr = words.FirstOrDefault(x => int.TryParse(x, out _));
+                    if(string.IsNullOrEmpty(numstr)) { return; }
+                    var num = int.Parse(numstr);
+                    var newBlood = new DamageWithTimeStamp
+                    {
+                        Damage = num,
+                        Time = DateTime.Now.TimeOfDay
+                    };
+                    _damage.Add(newBlood);
+                    if(_firstBlood==null)
+                    {
+                        _firstBlood = newBlood;
+                    }
+                }
+                _lastBytes = fileSize;
+                
+            }
+        }
+        private async Task RunLoop()
+        {
+            try
+            {
+                while (await _timer.WaitForNextTickAsync())
+                {
+                    var now = DateTime.Now.TimeOfDay;
+                    if (_firstBlood == null) continue;
+                    var delta = (int)(now - _firstBlood.Time).TotalSeconds;
+                    dpsLabel.Content = Math.Round((double)_damage.Sum(x=>x.Damage) / delta, 2);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        } 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             var hwnd = new WindowInteropHelper(this).Handle;
@@ -40,7 +161,9 @@ namespace OverlayApp
         }
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Button clicked!");
+            _damage.Clear();
+            _firstBlood = null;
+            dpsLabel.Content = "0";
         }
 
         private void Close_Click(object sender, RoutedEventArgs e)
@@ -107,5 +230,6 @@ namespace OverlayApp
 
         [DllImport("user32.dll")]
         private static extern bool PostMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
+        
     }
 }

@@ -19,8 +19,8 @@
 
             <!-- Контент -->
             <StackPanel >
-                <Label Content="0" Foreground="White" HorizontalAlignment="Center" />
-                <Button Content="Click me!"  Click="Button_Click"/>
+                <Label x:Name="dpsLabel" Content="0" Foreground="White" HorizontalAlignment="Center" />
+                <Button Content="Clear"  Click="Button_Click"/>
             </StackPanel>
         </StackPanel>
 
