@@ -1,8 +1,11 @@
-﻿using System.IO;
+﻿using OverlayApp.Models;
+using OverlayApp.Modals;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using Newtonsoft.Json;
 
 namespace OverlayApp
 {
@@ -18,6 +21,7 @@ namespace OverlayApp
         private FileSystemWatcher _watcher;
         private FileStream _fs;
         private List<DamageWithTimeStamp> _damage = new List<DamageWithTimeStamp>();
+        private List<string> _pets = new List<string>();
         private DamageWithTimeStamp? _firstBlood;
         public MainWindow()
         {
@@ -35,6 +39,19 @@ namespace OverlayApp
                 if( _fs!=null)
                     _fs.Dispose();
             };
+            var settings = JsonConvert.DeserializeObject<SettingsModel>(File.ReadAllText("./app_settings.json"));
+            _pets = settings.Pets;
+        }
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            SettingsWindow settingsWindow = new SettingsWindow();
+            settingsWindow.Owner = this; // чтобы окно знало "родителя" (опционально)
+            if (settingsWindow.ShowDialog() == true)
+            {
+                var result = settingsWindow.settingsModel;
+                _pets = result.Pets;
+                MessageBox.Show($"Выбрана настройка: {result}");
+            }
         }
         private void ReloadFile()
         {
@@ -107,21 +124,28 @@ namespace OverlayApp
                 byte[] buffer = new byte[fileSize - _lastBytes];
                 int bytesRead = _fs.Read(buffer, 0, buffer.Length);
                 var text = System.Text.Encoding.Default.GetString(buffer, 0, bytesRead);
-                if(text.Contains("терпит урон"))
+                var lines = text.Split('\n');
+                foreach (var line in lines)
                 {
-                    var words = text.Split(' ');
-                    var numstr = words.FirstOrDefault(x => int.TryParse(x, out _));
-                    if(string.IsNullOrEmpty(numstr)) { return; }
-                    var num = int.Parse(numstr);
-                    var newBlood = new DamageWithTimeStamp
+                    if (line.Contains("терпит урон") 
+                        || line.ToLower().Contains("you hit") 
+                        || _pets.Any(x => line.ToLower().Contains(x.ToLower()+" hits"))
+                        )
                     {
-                        Damage = num,
-                        Time = DateTime.Now.TimeOfDay
-                    };
-                    _damage.Add(newBlood);
-                    if(_firstBlood==null)
-                    {
-                        _firstBlood = newBlood;
+                        var words = line.Split(' ');
+                        var numstr = words.FirstOrDefault(x => int.TryParse(x, out _));
+                        if (string.IsNullOrEmpty(numstr)) { return; }
+                        var num = int.Parse(numstr);
+                        var newBlood = new DamageWithTimeStamp
+                        {
+                            Damage = num,
+                            Time = DateTime.Now.TimeOfDay
+                        };
+                        _damage.Add(newBlood);
+                        if (_firstBlood == null)
+                        {
+                            _firstBlood = newBlood;
+                        }
                     }
                 }
                 _lastBytes = fileSize;

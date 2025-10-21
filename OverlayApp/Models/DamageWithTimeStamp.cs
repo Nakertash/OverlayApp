@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OverlayApp
+namespace OverlayApp.Models
 {
-    internal class DamageWithTimeStamp
+    public class DamageWithTimeStamp
     {
         public int Damage { get; set; }
         public TimeSpan Time { get; set; }

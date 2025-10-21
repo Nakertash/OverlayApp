@@ -9,13 +9,26 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="app_settings.json" />
+    <None Remove="Assets\settingsIcon.png" />
     <None Remove="path.txt" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="path.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="app_settings.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+    <Resource Include="Assets\settingsIcon.png" />
   </ItemGroup>
 
 </Project>
