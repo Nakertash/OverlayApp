@@ -39,6 +39,10 @@ namespace OverlayApp
                 if( _fs!=null)
                     _fs.Dispose();
             };
+            if(!File.Exists("./app_settings.json"))
+            {
+                File.WriteAllText("./app_settings.json", JsonConvert.SerializeObject(new SettingsModel()));
+            }
             var settings = JsonConvert.DeserializeObject<SettingsModel>(File.ReadAllText("./app_settings.json"));
             _pets = settings.Pets;
         }
@@ -50,11 +54,18 @@ namespace OverlayApp
             {
                 var result = settingsWindow.settingsModel;
                 _pets = result.Pets;
-                MessageBox.Show($"Выбрана настройка: {result}");
+                
             }
         }
         private void ReloadFile()
         {
+            if (!File.Exists("./path.txt"))
+            {
+                File.Create("./path.txt");
+                MessageBox.Show($"Впишите в файл path.txt путь к папке с логами");
+                Close();
+                return;
+            }
             var configPath = File.ReadAllText("./path.txt");
             if(_fs!=null)
             {
@@ -189,6 +200,10 @@ namespace OverlayApp
             _firstBlood = null;
             dpsLabel.Content = "0";
         }
+        private void RefreshFile_Click(object sender, RoutedEventArgs e)
+        {
+            ReloadFile();
+        }
 
         private void Close_Click(object sender, RoutedEventArgs e)
         {
@@ -254,6 +269,7 @@ namespace OverlayApp
 
         [DllImport("user32.dll")]
         private static extern bool PostMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
+
         
     }
 }

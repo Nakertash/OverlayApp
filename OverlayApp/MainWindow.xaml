@@ -8,7 +8,7 @@
         WindowStyle="None"
         AllowsTransparency="True"
         Background="#00FFFFFF"
-        Title="MainWindow" Height="100" Width="100">
+        Title="MainWindow" Height="100" Width="120">
     <Border CornerRadius="10" Background="#80000000" Padding="10">
         <StackPanel>
             <!-- Верхняя панель для перетаскивания -->
@@ -17,10 +17,18 @@
                     <TextBlock Text="Overlay" Foreground="White" 
                     VerticalAlignment="Center" Margin="0,0,0,0" HorizontalAlignment="Center"/>
                 </Border>
+                <Button  Click="RefreshFile_Click" Background="Transparent">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Иконка -->
+                        <Image Source="Assets/refresh.png" Width="20" Height="20"/>
+                        <!-- Иконка -->
+                    </StackPanel>
+                </Button>
                 <Button  Click="SettingsButton_Click" Background="Transparent">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <!-- Иконка -->
-                        <Image Source="Assets/settingsIcon.png" Width="20" Height="20" Margin="0,0,0,0"/>
+                        <Image Source="Assets/settingsIcon.png" Width="20" Height="20"/>
+                        <!-- Иконка -->
                     </StackPanel>
                 </Button>
             </StackPanel>
