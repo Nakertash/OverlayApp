@@ -26,6 +26,7 @@ namespace OverlayApp.Modals
     {
         public SettingsModel? settingsModel = new SettingsModel();
         public ObservableCollection<EditableItem> Items { get; set; }
+        public ICommand RemoveItemCommand { get; }
         public SettingsWindow()
         {
             if (!File.Exists("./app_settings.json"))
@@ -34,11 +35,15 @@ namespace OverlayApp.Modals
             }
             settingsModel = JsonConvert.DeserializeObject<SettingsModel>(File.ReadAllText("./app_settings.json"));
             InitializeComponent();
-            Items = [.. settingsModel.Pets.Select(x=> new EditableItem() { Text = x })];
-
+            Items = [.. settingsModel.Pets.Select(x => new EditableItem() { Text = x })];
+            RemoveItemCommand = new RelayCommand(RemoveItem);
             DataContext = this;
         }
-
+        private void RemoveItem(object parameter)
+        {
+            if (parameter is EditableItem item)
+                Items.Remove(item);
+        }
         private void AddPet(object sender, RoutedEventArgs e)
         {
             Items.Add(new EditableItem() { Text = "new pet" });
@@ -71,5 +76,27 @@ namespace OverlayApp.Modals
             protected void OnPropertyChanged(string name) =>
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
+        public class RelayCommand : ICommand
+        {
+            private readonly Action<object> _execute;
+            private readonly Predicate<object> _canExecute;
+
+            public RelayCommand(Action<object> execute, Predicate<object> canExecute = null)
+            {
+                _execute = execute;
+                _canExecute = canExecute;
+            }
+
+            public bool CanExecute(object parameter) => _canExecute?.Invoke(parameter) ?? true;
+
+            public void Execute(object parameter) => _execute(parameter);
+
+            public event EventHandler CanExecuteChanged
+            {
+                add => CommandManager.RequerySuggested += value;
+                remove => CommandManager.RequerySuggested -= value;
+            }
+        }
+
     }
 }

@@ -23,6 +23,8 @@ namespace OverlayApp
         private List<DamageWithTimeStamp> _damage = new List<DamageWithTimeStamp>();
         private List<string> _pets = new List<string>();
         private DamageWithTimeStamp? _firstBlood;
+        private bool _isTracking = true;
+
         public MainWindow()
         {
             _timer = new PeriodicTimer(_tick);
@@ -93,29 +95,34 @@ namespace OverlayApp
             _watcher.Changed += (_, __) => CheckLog();
             _watcher.EnableRaisingEvents = true;
             _lastBytes = new FileInfo(_logFile).Length;
+            MessageBox.Show($"Файл {_logFile} выбран");
         }
         private string FindLogFile(string folderPath)
         {
             var result = string.Empty;
             var files = Directory.GetFiles(folderPath);
+            var lastDate = DateTime.MinValue;
+            var lastId = 0;
+            var logs = new List<LOTROLogFile>();
             foreach (var file in files)
             {
                 var name = System.IO.Path.GetFileName(file);
-                var lastDate = DateTime.MinValue;
-                var lastId = 0;
+
                 if (name.Contains("_") && name.Contains(".txt"))
                 {
                     var parts = name.Split('_');
                     var id = int.Parse(parts[2].Replace(".txt", ""));
                     var date = DateTime.Parse(parts[1].Substring(0, 4) + "-" + parts[1].Substring(4, 2) + "-" + parts[1].Substring(6, 2));
-                    if (id > lastId || date > lastDate)
+                    logs.Add(new LOTROLogFile()
                     {
-                        lastDate = date;
-                        lastId = id;
-                        result = file;
-                    }
+                        Date = date,
+                        ID = id,
+                        Path = file
+                    });
                 }
             }
+            var lastLog = logs.OrderByDescending(x => x.Date).ThenByDescending(x => x.ID).FirstOrDefault();
+            result = lastLog?.Path ?? string.Empty;
             return result;
         }
         private void CheckLog()
@@ -141,7 +148,7 @@ namespace OverlayApp
                 var lines = text.Split('\n');
                 foreach (var line in lines)
                 {
-                    if (line.Contains("терпит урон")
+                    if (line.ToLower().Contains("терпит урон")
                         || line.ToLower().Contains("you hit")
                         || _pets.Any(x => line.ToLower().Contains(x.ToLower() + " hits"))
                         )
@@ -173,9 +180,10 @@ namespace OverlayApp
                 while (await _timer.WaitForNextTickAsync())
                 {
                     var now = DateTime.Now.TimeOfDay;
-                    if (_firstBlood == null) continue;
+                    if (_firstBlood == null || !_isTracking) continue;
                     var delta = (int)(now - _firstBlood.Time).TotalSeconds;
-                    dpsLabel.Content = Math.Round((double)_damage.Sum(x => x.Damage) / delta, 2);
+                    dpsLabel.Content = Math.Round((double)_damage.Sum(x => x.Damage) / delta, 2) + "dps";
+                    timeLabel.Content = delta + "s";
                 }
             }
             catch (OperationCanceledException)
@@ -199,9 +207,19 @@ namespace OverlayApp
         }
         private void Button_Click(object sender, RoutedEventArgs e)
         {
+            if (_isTracking)
+            {
+                _isTracking = false;
+                timeLabel.Content = timeLabel.Content + " (stopped)";
+                StopStartButton.Content = "Start";
+                return;
+            }
+            _isTracking = true;
             _damage.Clear();
             _firstBlood = null;
-            dpsLabel.Content = "0";
+            dpsLabel.Content = "0dps";
+            timeLabel.Content = "0s";
+            StopStartButton.Content = "Stop";
         }
         private void RefreshFile_Click(object sender, RoutedEventArgs e)
         {

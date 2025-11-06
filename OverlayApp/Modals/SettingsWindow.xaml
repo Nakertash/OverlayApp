@@ -13,9 +13,17 @@
         <ListBox x:Name="EditableList" Margin="10,56,10,40" ItemsSource="{Binding Items}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" 
-                         Margin="2" Padding="3"
-                         BorderBrush="LightGray" BorderThickness="1"/>
+                    <DockPanel>
+                        <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" 
+                             Margin="2" Padding="3"
+                             BorderBrush="LightGray" BorderThickness="1"/>
+                        <Button Content="✕"
+                            DockPanel.Dock="Right"
+                            Margin="3,0,0,0"
+                            Padding="4,0"
+                            Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                            CommandParameter="{Binding}" />
+                    </DockPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>

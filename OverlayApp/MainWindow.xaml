@@ -8,8 +8,8 @@
         WindowStyle="None"
         AllowsTransparency="True"
         Background="#00FFFFFF"
-        Title="MainWindow" Height="100" Width="120">
-    <Border CornerRadius="10" Background="#80000000" Padding="10">
+        Title="MainWindow" Height="120" Width="120">
+    <Border CornerRadius="10" Background="#80000000" Padding="10" Margin="0,0,0,-20">
         <StackPanel>
             <!-- Верхняя панель для перетаскивания -->
             <StackPanel Orientation="Horizontal">
@@ -36,7 +36,8 @@
             <!-- Контент -->
             <StackPanel >
                 <Label x:Name="dpsLabel" Content="0" Foreground="White" HorizontalAlignment="Center" />
-                <Button Content="Clear"  Click="Button_Click"/>
+                <Label x:Name="timeLabel" Content="0" Foreground="White" HorizontalAlignment="Center" />
+                <Button x:Name="StopStartButton" Content="Stop"  Click="Button_Click" Width="48"/>
             </StackPanel>
         </StackPanel>
 
